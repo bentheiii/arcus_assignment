@@ -1,4 +1,6 @@
 # Arcus Assignment
+usage: `python main.py <binary file> <pattern file> <output file>`
+
 This assignment demonstrates pattern matching in a binary file. Inputs:
 * A binary file to search
 * A json file with patterns
@@ -14,3 +16,5 @@ Each pattern can be in one of three forms:
 # Known Issues/Quirks
 * Pattern group names must not include an underscore.
 * All the patterns must compile in a single REGEX expression, specifically, no two regex patterns may use named groups of the same name.
+* overlapping matches will not display.
+    * this can be fixed by replacing the regular expression engine with that of the regex package.
