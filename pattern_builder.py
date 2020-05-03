@@ -5,9 +5,12 @@ from json import load
 
 
 class PatternBuilder:
-    def __init__(self):
+    def __init__(self, check_regular_patterns=True):
         self.sub_patterns = []
         self.sub_pattern_names = []
+
+        self.check_regular_patterns = check_regular_patterns
+        self._known_group_names = set() if check_regular_patterns else None
 
         self.compiled = None
 
@@ -16,20 +19,35 @@ class PatternBuilder:
 
     @staticmethod
     def _from_plain_pattern(pattern: str):
-        # todo validate pattern
+        if not re.fullmatch(
+                r"[0-9a-fA-F\s]+",
+                pattern
+        ):
+            raise ValueError("string is not a plain pattern")
         return re.escape(bytes.fromhex(pattern))
 
-    @staticmethod
-    def _from_re_pattern(pattern: str):
+    def _from_re_pattern(self, pattern: str):
         if not pattern.startswith("+"):
             raise ValueError("regex pattern must start with plus sign")
         pattern = pattern[1:]
-        return eval("b'" + pattern + "'", {'__builtins__': None})
+        ret = eval("b'" + pattern + "'", {'__builtins__': None})
+        if self.check_regular_patterns:
+            try:
+                compiled = re.compile(ret)
+            except re.error as e:
+                raise ValueError from e
+            names = set(compiled.groupindex.keys())
+            if any(('_' in g) for g in names):
+                raise ValueError("group names cannot include an underscore")
+            if self._known_group_names.intersection(names):
+                raise ValueError("repeated group names")
+            self._known_group_names.update(names)
+        return ret
 
     def _from_nonstandard_pattern(self, pattern):
         if not re.fullmatch(
-            r"(\\x[0-9a-f]{2}|((?P<half>[A-Z?])(?P=half)))+",
-            pattern
+                r"(\\x[0-9a-f]{2}|((?P<half>[G-Z?])(?P=half)))+",
+                pattern
         ):
             raise ValueError("string is not a nonstandard pattern")
 
@@ -48,7 +66,7 @@ class PatternBuilder:
                 return f"(?P<{token}_{n}>.)"
 
         re_pattern = re.sub(
-            r"([A-Z?])\1",
+            r"([G-Z?])\1",
             replace,
             pattern
         )
@@ -60,15 +78,17 @@ class PatternBuilder:
             self._from_nonstandard_pattern,
             self._from_re_pattern
         )
+        errs = []
         for trial in trials:
             try:
                 re_pattern = trial(pattern)
-            except (ValueError, SyntaxError):
+            except (ValueError, SyntaxError) as e:
+                errs.append(e)
                 continue
             else:
                 break
         else:
-            raise ValueError(f'cannot parse pattern {pattern}')
+            raise ValueError(f'cannot parse pattern {pattern}:\n'+'\n'.join(str(e) for e in errs))
 
         re_pattern += self._next_pattern_marker()
         self.sub_patterns.append(re_pattern)
@@ -107,7 +127,7 @@ class PatternBuilder:
         if isinstance(patterns_obj, Mapping):
             patterns = patterns_obj.items()
         elif isinstance(patterns_obj, Iterable):
-            patterns = zip(patterns_obj, count())
+            patterns = zip(patterns_obj, map(str, count()))
         else:
             raise TypeError("patterns file must be either a list or dict")
 
