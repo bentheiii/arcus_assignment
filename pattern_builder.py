@@ -21,11 +21,38 @@ class PatternBuilder:
 
     @staticmethod
     def _from_re_pattern(pattern: str):
+        if not pattern.startswith("+"):
+            raise ValueError("regex pattern must start with plus sign")
+        pattern = pattern[1:]
         return eval("b'" + pattern + "'", {'__builtins__': None})
 
-    @staticmethod
-    def _from_nonstandard_pattern(pattern):
-        raise NotImplementedError("todo")
+    def _from_nonstandard_pattern(self, pattern):
+        if not re.fullmatch(
+            r"(\\x[0-9a-f]{2}|((?P<half>[A-Z?])(?P=half)))+",
+            pattern
+        ):
+            raise ValueError("string is not a nonstandard pattern")
+
+        n = len(self.sub_patterns)
+
+        seen_vars = set()
+
+        def replace(match):
+            token = match[1]
+            if token == "?":
+                return "."
+            if token in seen_vars:
+                return f"(?P={token}_{n})"
+            else:
+                seen_vars.add(token)
+                return f"(?P<{token}_{n}>.)"
+
+        re_pattern = re.sub(
+            r"([A-Z?])\1",
+            replace,
+            pattern
+        )
+        return eval("b'" + re_pattern + "'", {'__builtins__': None})
 
     def add_pattern(self, pattern, name):
         trials = (
@@ -36,7 +63,7 @@ class PatternBuilder:
         for trial in trials:
             try:
                 re_pattern = trial(pattern)
-            except (ValueError, SyntaxError, NotImplementedError):
+            except (ValueError, SyntaxError):
                 continue
             else:
                 break
@@ -51,6 +78,19 @@ class PatternBuilder:
 
     def compile(self):
         self.compiled = re.compile(b'|'.join(self.sub_patterns))
+
+    def user_groups(self):
+        if self.compiled is None:
+            self.compile()
+        for group_key in self.compiled.groupindex.keys():
+            r_ind = group_key.rfind("_")
+            if r_ind == 0:
+                continue
+            if r_ind < 0:
+                name = group_key
+            else:
+                name = group_key[:r_ind]
+            yield name, group_key
 
     def match_all(self, src):
         if self.compiled is None:

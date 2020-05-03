@@ -1,6 +1,8 @@
 {
   "00010203": "flush",
   "\\x01\\x02\\x03":"flush_hex",
-  "\\x00(\\x01)+(\\x00)": "bounded",
-  "\\x10(?P<mid>.)\\x10": "bten"
+  "+\\x00(\\x01)+(\\x00)": "bounded",
+  "+\\x10(?P<mid>.)\\x10": "bten",
+  "\\x20XXXX": "twenty_XX",
+  "\\x30XX??YYXX": "complex"
 }

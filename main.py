@@ -10,6 +10,9 @@ parser.add_argument("patterns_file")
 parser.add_argument("output_path", default=None, nargs='?')
 
 if __name__ == '__main__':
+    # todo readme
+    # todo tests
+    # todo doc
     args = parser.parse_args()
     with open(args.patterns_file) as patterns_file:
         builder = PatternBuilder.from_file(patterns_file)
@@ -17,16 +20,16 @@ if __name__ == '__main__':
     out = []
 
     builder.compile()
-    var_groups = [k for k in builder.compiled.groupindex.keys() if not k.startswith("_")]
+    user_groups = list(builder.user_groups())
 
     with open(args.source_file, 'r+b') as file, \
             mmap(file.fileno(), 0) as mapped:
         for name, match in builder.match_all(mapped):
             vars_ = {}
-            for vg in var_groups:
-                v = match[vg]
+            for group_name, group_key in user_groups:
+                v = match[group_key]
                 if v is not None:
-                    vars_[vg] = v
+                    vars_[group_name] = v
 
             out.append({
                 "start": match.start(),
