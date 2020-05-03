@@ -5,8 +5,8 @@ from mmap import mmap
 from pattern_builder import PatternBuilder
 
 parser = ArgumentParser()
-parser.add_argument("source_file")
-parser.add_argument("patterns_file")
+parser.add_argument("source_file", help="the path to the binary file to search")
+parser.add_argument("patterns_file", help="the path to the JSON file with regex patterns")
 parser.add_argument("output_path", default=None, nargs='?')
 
 if __name__ == '__main__':
@@ -27,7 +27,7 @@ if __name__ == '__main__':
             for group_name, group_key in user_groups:
                 v = match[group_key]
                 if v is not None:
-                    vars_[group_name] = v
+                    vars_[group_name] = list(v)
 
             out.append({
                 "start": match.start(),
