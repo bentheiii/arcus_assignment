@@ -10,7 +10,6 @@ parser.add_argument("patterns_file")
 parser.add_argument("output_path", default=None, nargs='?')
 
 if __name__ == '__main__':
-    # todo readme
     # todo doc
     args = parser.parse_args()
     with open(args.patterns_file) as patterns_file:
