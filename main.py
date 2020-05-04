@@ -8,23 +8,23 @@ parser = ArgumentParser()
 parser.add_argument("source_file", help="the path to the binary file to search")
 parser.add_argument("patterns_file", help="the path to the JSON file with regex patterns")
 parser.add_argument("output_path", default=None, nargs='?',
-                    help='optional path to write output (as json file). If ommited, the result will only print.')
+                    help='optional path to write output (as json file). If omitted, the output will only print.')
 
 if __name__ == '__main__':
     # todo doc
     args = parser.parse_args()
     with open(args.patterns_file) as patterns_file:
-        builder = BinaryMultiPattern.from_file(patterns_file)
+        multi_pattern = BinaryMultiPattern.from_file(patterns_file)
 
     out = []
 
-    builder.compile()
+    multi_pattern.compile()
     # we grab all the user groups that might be relevant to matches
-    user_groups = list(builder.user_groups())
+    user_groups = list(multi_pattern.user_groups())
 
     with open(args.source_file, 'r+b') as file, \
             mmap(file.fileno(), 0) as mapped:
-        for name, match in builder.match_all(mapped):
+        for name, match in multi_pattern.match_all(mapped):
             # fill in only the relevant user groups for each tag
             # todo Improvement idea: instead of iterating through all user groups,
             #  only iterate through relevant user groups? For now the performance impact of this is minor

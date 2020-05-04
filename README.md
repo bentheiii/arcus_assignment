@@ -1,12 +1,12 @@
 # Arcus Assignment
-usage: `python main.py <binary file> <pattern file> <output file>`
+usage: `python main.py <binary file> <pattern file> [output file]`
 
 This assignment demonstrates pattern matching in a binary file. Inputs:
 * A binary file to search
 * A json file with patterns
 
 The JSON file can be one of two forms:
-* A dictionary where each pattern is mapped to a name (ie: `{"\\x00\\x01": "zero_one"}`.)
+* A dictionary where each pattern is mapped to a name (ie: `{"\\x00\\x01": "zero_one", "0002": "zero_two"}`.)
 * A list of patterns, where each pattern will be named after its index in the list.
 
 Each pattern can be in one of three forms:

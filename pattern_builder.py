@@ -114,7 +114,6 @@ class BinaryMultiPattern:
                 re_pattern = trial(pattern)
             except (ValueError, SyntaxError) as e:
                 errs.append(e)
-                continue
             else:
                 break
         else:
